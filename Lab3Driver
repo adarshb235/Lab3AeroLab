@@ -7,12 +7,14 @@ digits = num2str(desiredDigit)-'0';
 
 n = 100;
 
-% Part 1 
+% Part 1 Task 2
 
 airFoils = struct();
 
-
-
+figure;
+hold on;
+box on;
+grid on;
 for i = 2:n
     span = 1;
     panelNum = 2*i; % necessito even number
@@ -24,8 +26,13 @@ for i = 2:n
     airFoils(i-1).x = x_b;
     airFoils(i-1).y = y_b;
     airFoils(i-1).Cl = Cl;
-
+    plot(panelNum, Cl, '.k');
 end
+title('Convergence of Cl vs Panel Count')
+ylabel('Sectional Lift Coefficient')
+xlabel('Panel Count')
+hold off;
+
 
 
 % Part 1 Task 1 Function
