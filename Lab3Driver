@@ -2,42 +2,71 @@ clc;
 clear;
 close all;
 
-desiredDigit = 4415;
-digits = num2str(desiredDigit)-'0';
 
-n = 100;
 
-% Part 1 Task 2
+% Part 1 Task 1
 
-airFoils = struct();
+desiredDigit = 0018;
+panelNum = 1000;
+digits = digi(desiredDigit);
+
+[x_b, y_b] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 1);
+
+desiredDigit = 2418;
+digits = digi(desiredDigit);
+
+[x_b, y_b] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 1);
+
+% need to add camber line to plot
+
+
+% Part 1 Task 2 Part 1
+
+digit1 = 0006;
+
+digits = digi(digit1);
+[x_b_1, y_b_1] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 0);
+[Cl_ref_1] = Vortex_Panel(x_b_1, y_b_1, 5);
+
+digit2 = 0012;
+
+digits = digi(digit1);
+[x_b_2, y_b_2] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 0);
+[Cl_ref_2] = Vortex_Panel(x_b_2, y_b_2, 5);
+
+digit3 = 0018;
+
+digits = digi(digit1);
+[x_b_3, y_b_3] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 0);
+[Cl_ref_3] = Vortex_Panel(x_b_3, y_b_3, 5);
+
+[airFoils_0006, optPanel_0006] = task2(Cl_ref_1, digit1);
+[airFoils_0012, optPanel_0012] = task2(Cl_ref_2, digit2);
+[airFoils_0018, optPanel_0018] = task2(Cl_ref_3, digit3);
+
+
+% Part 1 Task 2 Part 2
+
+
+Cl_1 = task22(optPanel_0006, 0006);
+Cl_2 = task22(optPanel_0012, 0012);
+Cl_3 = task22(optPanel_0018, 0018);
+
+alpha = -25:24;
 
 figure;
 hold on;
 box on;
 grid on;
-for i = 2:n
-    span = 1;
-    panelNum = 2*i; % necessito even number
-    airFoils(i-1).digit = desiredDigit;
-    airFoils(i-1).panelCount = panelNum;
-    airFoils(i-1).span = span;
-    [x_b, y_b] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2);
-    [Cl] = Vortex_Panel(x_b, y_b, 5);
-    airFoils(i-1).x = x_b;
-    airFoils(i-1).y = y_b;
-    airFoils(i-1).Cl = Cl;
-    plot(panelNum, Cl, '.k');
-end
-title('Convergence of Cl vs Panel Count')
-ylabel('Sectional Lift Coefficient')
-xlabel('Panel Count')
-hold off;
-
+plot(alpha, Cl_1, 'LineWidth', 1.5);
+plot(alpha, Cl_2, 'LineWidth', 1.5);
+plot(alpha, Cl_3, 'LineWidth', 1.5);
+legend('NACA 0006', 'NACA 0012', 'NACA 0018')
 
 
 % Part 1 Task 1 Function
 
-function [x_b, y_b] = genNACA(c, m, p, t, panel)
+function [x_b, y_b] = genNACA(c, m, p, t, panel, graph)
 
 m = m/100; 
 p = p/10;
@@ -76,11 +105,109 @@ y_l = y_c - y_t .* cos(xi);
 x_b = [fliplr(x_l), x_u(2:end)];
 y_b = [fliplr(y_l), y_u(2:end)];
 
-%figure;
-%hold on;
-%axis equal;
-%grid on;
-%box on;
-%plot(x_b, y_b, 'k');
+if (graph == 1)
+    figure;
+    hold on;
+    axis equal;
+    grid on;
+    box on;
+    plot(x_b, y_b, 'k');
+    title("NACA" + m*100 + p*10 + t*100)
+end
 
+end
+
+function [vec] = digi(input)
+    vec = num2str(input);
+    if length(vec) < 4
+        % Pad with leading zeros if it's shorter than 4
+        vec = pad(vec, 4, 'left', '0'); 
+    elseif length(vec) > 4
+        % Truncate to 4 characters if it's longer
+        vec = vec(1:4);
+    end
+    vec = vec - '0';
+end
+
+function [airFoils, optPanel] = task2(Cl_ref, desiredDigit)
+
+digits = digi(desiredDigit);
+
+airFoils = struct();
+
+n = 300;
+
+figure;
+hold on;
+box on;
+grid on;
+for i = 2:n
+    span = 1;
+    panelNum = 2*i; % necessito even number
+    airFoils(i-1).digit = desiredDigit;
+    airFoils(i-1).panelCount = panelNum;
+    airFoils(i-1).span = span;
+    [x_b_2, y_b_2] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 0);
+    [Cl] = Vortex_Panel(x_b_2, y_b_2, 5);
+    airFoils(i-1).x = x_b_2;
+    airFoils(i-1).y = y_b_2;
+    airFoils(i-1).Cl = Cl;
+    plot(panelNum, Cl, '.k');
+end
+title('Convergence of Cl vs Panel Count')
+ylabel('Sectional Lift Coefficient')
+xlabel('Panel Count')
+hold off;
+
+% Part 1 Task 2
+
+% optimize for 0006
+
+fprintf('\n--- Convergence Analysis ---\n');
+
+% Define the 1% tolerance bounds based on the reference Cl
+tolerance = 0.01; % 1%
+Cl_lower = Cl_ref * (1 - tolerance);
+Cl_upper = Cl_ref * (1 + tolerance);
+
+fprintf('Target 1%% range: [%.6f, %.6f]\n', Cl_lower, Cl_upper);
+
+% Initialize variables to store the result
+min_panels_for_convergence = NaN;
+converged_Cl = NaN;
+
+% Loop through the results from Task 2 (which are already sorted)
+for i = 1:length(airFoils)
+    current_Cl = airFoils(i).Cl;
+    current_panelNum = airFoils(i).panelCount;
+    
+    % Check if the current Cl is within the tolerance bounds
+    if (current_Cl >= Cl_lower) && (current_Cl <= Cl_upper)
+        min_panels_for_convergence = current_panelNum;
+        converged_Cl = current_Cl;
+        break; % Found the first (minimum) value, so exit the loop
+    end
+end
+
+% Display the final result
+if ~isnan(min_panels_for_convergence)
+    fprintf('Minimum panels for 1%% convergence: %d\n', min_panels_for_convergence);
+    fprintf('Cl at %d panels: %.6f\n', min_panels_for_convergence, converged_Cl);
+else
+    % This will print if the loop finished without finding a value
+    fprintf('Convergence not achieved within the 4 to %d panel range.\n', n*2);
+end
+
+optPanel = min_panels_for_convergence;
+
+end
+
+function [Cl_vec] = task22(optPanel, desiredDigit)
+    digits = digi(desiredDigit);
+    [x_b_2, y_b_2] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (optPanel/2) + 2, 0);
+
+    Cl_vec = zeros(1, 50);
+    for i = 1:50
+        [Cl_vec(i)] = Vortex_Panel(x_b_2, y_b_2, i - 25);
+    end
 end
