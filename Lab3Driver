@@ -2,11 +2,33 @@ clc;
 clear;
 close all;
 
-% generalize with theta/cosmap
+desiredDigit = 4415;
+digits = num2str(desiredDigit)-'0';
 
-panelNum = 1000;
-[x_b, y_b] = genNACA(1, 0, 0, 12, panelNum/2 + 1);
-[Cl] = Vortex_Panel(x_b, y_b, 5);
+n = 100;
+
+% Part 1 
+
+airFoils = struct();
+
+
+
+for i = 2:n
+    span = 1;
+    panelNum = 2*i; % necessito even number
+    airFoils(i-1).digit = desiredDigit;
+    airFoils(i-1).panelCount = panelNum;
+    airFoils(i-1).span = span;
+    [x_b, y_b] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2);
+    [Cl] = Vortex_Panel(x_b, y_b, 5);
+    airFoils(i-1).x = x_b;
+    airFoils(i-1).y = y_b;
+    airFoils(i-1).Cl = Cl;
+
+end
+
+
+% Part 1 Task 1 Function
 
 function [x_b, y_b] = genNACA(c, m, p, t, panel)
 
@@ -14,7 +36,9 @@ m = m/100;
 p = p/10;
 t = t/100;
 
-x = linspace(0, c, panel);
+theta = linspace(0, pi, panel);
+
+x = c./2 * (1-cos(theta));
 x_c = x/c;
 
 y_t = (t/0.2) * c * ((0.2969 * sqrt(x_c)) - (0.126 * x_c) - (0.3516 * (x_c).^2) + (0.2843 * (x_c).^3) - (0.1036 * (x_c).^4));
@@ -45,11 +69,11 @@ y_l = y_c - y_t .* cos(xi);
 x_b = [fliplr(x_l), x_u(2:end)];
 y_b = [fliplr(y_l), y_u(2:end)];
 
-figure;
-hold on;
-axis equal;
-grid on;
-box on;
-plot(x_b, y_b, 'k');
+%figure;
+%hold on;
+%axis equal;
+%grid on;
+%box on;
+%plot(x_b, y_b, 'k');
 
 end
