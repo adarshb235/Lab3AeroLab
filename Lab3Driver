@@ -7,7 +7,7 @@ close all;
 % Part 1 Task 1
 
 desiredDigit = 0018;
-panelNum = 1000;
+panelNum = 500;
 digits = digi(desiredDigit);
 
 [x_b, y_b] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 1);
@@ -16,8 +16,6 @@ desiredDigit = 2418;
 digits = digi(desiredDigit);
 
 [x_b, y_b] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 1);
-
-% need to add camber line to plot
 
 
 % Part 1 Task 2 Part 1
@@ -30,19 +28,22 @@ digits = digi(digit1);
 
 digit2 = 0012;
 
-digits = digi(digit1);
+digits = digi(digit2);
 [x_b_2, y_b_2] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 0);
 [Cl_ref_2] = Vortex_Panel(x_b_2, y_b_2, 5);
 
 digit3 = 0018;
 
-digits = digi(digit1);
+digits = digi(digit3);
 [x_b_3, y_b_3] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 0);
 [Cl_ref_3] = Vortex_Panel(x_b_3, y_b_3, 5);
 
-[airFoils_0006, optPanel_0006] = task2(Cl_ref_1, digit1);
-[airFoils_0012, optPanel_0012] = task2(Cl_ref_2, digit2);
-[airFoils_0018, optPanel_0018] = task2(Cl_ref_3, digit3);
+[airFoils_0006, optPanel_0006] = task2(Cl_ref_1, digit1, 0, 0);
+[airFoils_0012, optPanel_0012] = task2(Cl_ref_2, digit2, 1, 1);
+[airFoils_0018, optPanel_0018] = task2(Cl_ref_3, digit3, 0, 0);
+
+optPanel_0006 = 64;
+optPanel_0018 = 66; % ran these optimizers earlier
 
 
 % Part 1 Task 2 Part 2
@@ -52,7 +53,7 @@ Cl_1 = task22(optPanel_0006, 0006);
 Cl_2 = task22(optPanel_0012, 0012);
 Cl_3 = task22(optPanel_0018, 0018);
 
-alpha = -25:24;
+alpha = -14:15;
 
 figure;
 hold on;
@@ -61,8 +62,43 @@ grid on;
 plot(alpha, Cl_1, 'LineWidth', 1.5);
 plot(alpha, Cl_2, 'LineWidth', 1.5);
 plot(alpha, Cl_3, 'LineWidth', 1.5);
-legend('NACA 0006', 'NACA 0012', 'NACA 0018')
+title('Task 2.2: Sectional Lift Coefficient vs Angle of Attack')
+legend('NACA 0006', 'NACA 0012', 'NACA 0018', 'Location', 'best')
 
+% Part 1 Task 3
+
+digit4 = 2412;
+
+digits = digi(digit4);
+[x_b_4, y_b_4] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 0);
+[Cl_ref_4] = Vortex_Panel(x_b_4, y_b_4, 5);
+
+digit5 = 4412; 
+
+digits = digi(digit5);
+[x_b_5, y_b_5] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (panelNum/2) + 2, 0);
+[Cl_ref_5] = Vortex_Panel(x_b_5, y_b_5, 5);
+
+[airFoils_2412, optPanel_2412] = task2(Cl_ref_4, digit4, 0, 0);
+[airFoils_4412, optPanel_4412] = task2(Cl_ref_5, digit5, 0, 0);
+
+optPanel_2412 = 68; % ran optimizer earlier
+optPanel_4412 = 68; % ran optimizer earlier
+
+Cl_4 = task22(optPanel_2412, 2412);
+Cl_5 = task22(optPanel_4412, 4412);
+
+alpha = -14:15;
+
+figure;
+hold on;
+box on;
+grid on;
+plot(alpha, Cl_2, 'LineWidth', 1.5);
+plot(alpha, Cl_4, 'LineWidth', 1.5);
+plot(alpha, Cl_5, 'LineWidth', 1.5);
+title('Task 3: Sectional Lift Coefficient vs Angle of Attack')
+legend('NACA 0012', 'NACA 2412', 'NACA 4412', 'Location', 'best')
 
 % Part 1 Task 1 Function
 
@@ -112,7 +148,9 @@ if (graph == 1)
     grid on;
     box on;
     plot(x_b, y_b, 'k');
+    plot(x, y_c)
     title("NACA" + m*100 + p*10 + t*100)
+    legend('Foil Outline', 'Mean Camber Line', 'Location', 'best');
 end
 
 end
@@ -129,18 +167,20 @@ function [vec] = digi(input)
     vec = vec - '0';
 end
 
-function [airFoils, optPanel] = task2(Cl_ref, desiredDigit)
+function [airFoils, optPanel] = task2(Cl_ref, desiredDigit, graph, optm)
 
 digits = digi(desiredDigit);
 
 airFoils = struct();
 
-n = 300;
+n = 500;
 
+if graph == 1
 figure;
 hold on;
 box on;
 grid on;
+end
 for i = 2:n
     span = 1;
     panelNum = 2*i; % necessito even number
@@ -152,62 +192,60 @@ for i = 2:n
     airFoils(i-1).x = x_b_2;
     airFoils(i-1).y = y_b_2;
     airFoils(i-1).Cl = Cl;
+    if graph == 1
     plot(panelNum, Cl, '.k');
+    end
 end
-title('Convergence of Cl vs Panel Count')
+if graph == 1
+title("Convergence of Cl vs Panel Count for NACA" + num2str(desiredDigit,'%04.0f'))
 ylabel('Sectional Lift Coefficient')
 xlabel('Panel Count')
 hold off;
+end
 
-% Part 1 Task 2
+optPanel = 64;
 
-% optimize for 0006
+if optm == 1
 
-fprintf('\n--- Convergence Analysis ---\n');
+fprintf('\n--- Convergence Analysis for NACA%i ---\n', desiredDigit);
 
-% Define the 1% tolerance bounds based on the reference Cl
-tolerance = 0.01; % 1%
+tolerance = 0.01; 
 Cl_lower = Cl_ref * (1 - tolerance);
 Cl_upper = Cl_ref * (1 + tolerance);
 
 fprintf('Target 1%% range: [%.6f, %.6f]\n', Cl_lower, Cl_upper);
 
-% Initialize variables to store the result
 min_panels_for_convergence = NaN;
 converged_Cl = NaN;
 
-% Loop through the results from Task 2 (which are already sorted)
 for i = 1:length(airFoils)
     current_Cl = airFoils(i).Cl;
     current_panelNum = airFoils(i).panelCount;
     
-    % Check if the current Cl is within the tolerance bounds
     if (current_Cl >= Cl_lower) && (current_Cl <= Cl_upper)
         min_panels_for_convergence = current_panelNum;
         converged_Cl = current_Cl;
-        break; % Found the first (minimum) value, so exit the loop
+        break; 
     end
 end
 
-% Display the final result
 if ~isnan(min_panels_for_convergence)
     fprintf('Minimum panels for 1%% convergence: %d\n', min_panels_for_convergence);
     fprintf('Cl at %d panels: %.6f\n', min_panels_for_convergence, converged_Cl);
 else
-    % This will print if the loop finished without finding a value
     fprintf('Convergence not achieved within the 4 to %d panel range.\n', n*2);
 end
 
 optPanel = min_panels_for_convergence;
-
+end
 end
 
 function [Cl_vec] = task22(optPanel, desiredDigit)
     digits = digi(desiredDigit);
     [x_b_2, y_b_2] = genNACA(1, digits(1), digits(2), str2double(strcat(num2str(digits(3)), num2str(digits(4)))), (optPanel/2) + 2, 0);
 
-    Cl_vec = zeros(1, 50);
-    for i = 1:50
-        [Cl_vec(i)] = Vortex_Panel(x_b_2, y_b_2, i - 25);
+    Cl_vec = zeros(1, 30);
+    for i = 1:30
+        [Cl_vec(i)] = Vortex_Panel(x_b_2, y_b_2, i - 15);
     end
 end
