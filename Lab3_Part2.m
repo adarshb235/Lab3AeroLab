@@ -7,14 +7,14 @@ clear;
 
 %wing characteristics
 b= 100; %span [feet]
-a0_t = 6.3; %cross-sectional lift slope at the tips [radians]
-a0_r = 6.5; % cross-section lift slope at the root [radians]
+a0_t = 2*pi; %cross-sectional lift slope at the tips [radians]
+a0_r = 2*pi; % cross-section lift slope at the root [radians]
 c_t = 8; % chord at tips [ft]
 c_r = 10; % chord at root [ft]
 aero_t = 0; % zero-lift AoA at tips [radians]
-aero_r = -2*pi/180; % zero-lift AoA at root [radians]
+aero_r = 0; % zero-lift AoA at root [radians]
 geo_t = 5*pi/180; % geometric AoA (geometric twist + alpha) at tips [radians]
-geo_r = 7*pi/180; % geometric AoA (geometric twist + alpha) at root [radians]
+geo_r = 5*pi/180; % geometric AoA (geometric twist + alpha) at root [radians]
 
 N = 5; % # of odd terms for circulation
 
@@ -38,36 +38,39 @@ function [e,c_L,c_Di,A_matrix] = PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,ge
             Mij(i,j) = (mu + (n / sin(ac_Theta))) * sin(n * ac_Theta);
         end
     end
-    A_matrix = Mij\b_i;
+    A_matrix = Mij \ b_i;
     
     S = b*((c_r +c_t)/2);
     AR = b^2/S;
     %coefficent of lift
     c_L = A_matrix(1)*pi*AR;
 
-    C_Di_total = 0;
+    sum_n_An2 = 0;
     for j=1:N
         n = 2 * j - 1;
-        C_Di_total = C_Di_total + n * (A_matrix(j).^2);
+        sum_n_An2 = sum_n_An2 + n * (A_matrix(j).^2);
     end
 
-    c_Di = pi * AR * C_Di_total;
+   c_Di = pi * AR * sum_n_An2;
 
-    %e
-    e = A_matrix(1).^2 ./C_Di_total;
+   % e
+   if sum_n_An2 == 0
+        e = 0;
+    else
+        e = A_matrix(1)^2 / sum_n_An2;
+    end
     %coefficent of drag
-    c_Di = (c_L^2)/(pi*AR*e);
+    
+
+   
 
     %taper = linspace(0,(c_t/c_r),length(delta));
-    % figure()
-    % hold on;
-    % plot(taper, delta,'k');
-    % xlabel('Taper ratio c_t/c_r');
-    % ylabel('delta');
+    %figure()
+    %hold on;
+    %plot(taper, delta,'k');
+    %xlabel('Taper ratio c_t/c_r');
+    %ylabel('delta');
 
 end
 
-    % 
-    % for i=1:length(y_0)
-    %     sec_lift = rho_inf*v_inf *circ(y_0);
-    % end
+
