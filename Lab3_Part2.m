@@ -95,7 +95,7 @@ function [e,c_L,c_Di,A_matrix] = PLLT(b, a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,g
 
    c_Di = pi * AR * sum_n_An2; % induced drag
 
-   if sum_n_An2 == 0 % e while avoiding division by 0
+   if sum_n_An2 == 0
         e = 0;
     else
         e = A_matrix(1)^2 / sum_n_An2;
