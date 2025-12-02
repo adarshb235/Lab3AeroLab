@@ -45,7 +45,8 @@ A_mat = zeros(length(alpha), N);
 liftingLine = struct();
 Cl_ref = struct();
 
-p_drag = [0.8562, 0.0083, 0.0071]; % fit data from airfoiltools
+alpha_exp = [-4 -2 0 2 4 6 8] .* pi/180;
+p_drag = [0.00232 0.00144 0.00114 0.00144 0.00232 0.00395 0.00612]; % fit data from airfoiltools for NACA 0012
 
 
 for i = 1:length(alpha)
@@ -54,30 +55,42 @@ for i = 1:length(alpha)
     geo_t = alpha(i); % geometric AoA (geometric twist + alpha) at root [radians]
     Cl_ref.tip(i) = Vortex_Panel(x_b_tip, y_b_tip, alpha(i));
     Cl_ref.root(i) = Vortex_Panel(x_b_root, y_b_root, alpha(i));
-    [liftingLine.e(i),liftingLine.c_L(i),liftingLine.c_Di(i), A_mat(i, :)] = PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,geo_r, N);
+    [liftingLine.e(i),liftingLine.CL(i),liftingLine.CD_i(i), A_mat(i, :)] = PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,geo_r, N);
     
-    liftingLine.CD_prof(i) = polyval(p_drag, alpha(i));
-    liftingLine.CD_tot(i) = liftingLine.CD_prof(i) + liftingLine.c_Di(i);
+    liftFit = polyfit(alpha_exp, p_drag, 2);
+    liftingLine.CD_prof(i) = polyval(liftFit, alpha(i));
+    liftingLine.CD_tot(i) = liftingLine.CD_prof(i) + liftingLine.CD_i(i);
 end
 S = (c_r + c_t)/2 * b;
 
 
 figure(); % Task 1 Plot
 hold on;
-plot(alpha * 180/pi, liftingLine.c_L, 'LineWidth', 1.5);
+grid on;
+box on;
+plot(alpha * 180/pi, liftingLine.CL, 'LineWidth', 1.5);
 xlabel('Angle of Attack (deg)');
 ylabel('Lift Coefficient (C_L)');
 title('Lift Coefficient vs Angle of Attack');
+legend('Cessna 180 (NACA 2412 Root, NACA 0012 Tip)', 'Location', 'best')
+
+figure; % task 2
+hold on;
 grid on;
 box on;
-legend('Cessna 180 (NACA 2412 Root, NACA 0012 Tip)', 'Location', 'best')
+plot(alpha * 180/pi, liftingLine.CD_prof, 'LineWidth', 1.5);
+plot(alpha_exp * 180/pi, p_drag, 'LineWidth', 1.2)
+xlabel('Angle of Attack (deg)');
+ylabel('Drag Coefficient (C_D)');
+title('Drag Coefficient vs Angle of Attack');
+legend('Calc Profile Drag', 'Experimental Data', 'Location', 'best')
 
 figure; % task 3 plot
 hold on;
 grid on;
 box on;
 plot(alpha * 180/pi, liftingLine.CD_tot, 'k', 'LineWidth', 2);
-plot(alpha * 180/pi, liftingLine.c_Di, 'b--', 'LineWidth', 1.5);
+plot(alpha * 180/pi, liftingLine.CD_i, 'b--', 'LineWidth', 1.5);
 plot(alpha * 180/pi, liftingLine.CD_prof, 'r-.', 'LineWidth', 1.5);
 xlabel('Angle of Attack (deg)');
 ylabel('Drag Coefficient');
@@ -91,8 +104,8 @@ V = zeros(1, length(alpha));
 T_req = zeros(1, length(alpha));
 
 for i = 1:length(alpha)
-    if liftingLine.c_L(i) > 0
-        V_1 = sqrt((2*W)/(rho * S * liftingLine.c_L(i)));
+    if liftingLine.CL(i) > 0
+        V_1 = sqrt((2*W)/(rho * S * liftingLine.CL(i)));
         V(i) = 0.592484 * V_1;
         T_req(i) = 0.5 * rho * V_1^2 * S * liftingLine.CD_tot(i);
     else
@@ -106,9 +119,10 @@ plot(V, T_req, 'b-', 'LineWidth', 2);
 xlabel('Airspeed (knots)');
 ylabel('Thrust Required (lbs)');
 title('Thrust Required for Steady Level Flight (10,000 ft)');
+legend('Cessna 180 (NACA 2412 Root, NACA 0012 Tip)', 'Location', 'best')
 grid on;
-xlim([0, 200]); % Set reasonable limits for visualization
-ylim([0, 1000]);
+
+filenamesVec = ["task1liftpolar", "task2dragvsangle", "task3dragpolar", "task4velvsthrust"];
 
 % Part 1 NACA Code Generator
 
