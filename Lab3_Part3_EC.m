@@ -3,7 +3,8 @@ clear;
 close all;
 
 
-alpha = (-10:15) .* (pi/180);
+alpha = (-10:2:15) .* (pi/180);
+alpha_exp = (-14:2:14) .* pi/180;
 
 tipCode = 0012;
 panelCount = 64;
@@ -45,16 +46,16 @@ A_mat = zeros(length(alpha), N);
 liftingLine = struct();
 Cl_ref = struct();
 
-alpha_exp = [-4 -2 0 2 4 6 8] .* pi/180;
-p_drag = [0.00232 0.00144 0.00114 0.00144 0.00232 0.00395 0.00612]; % fit data from airfoiltools for NACA 0012
+alpha_exp = [-14 -12 -10 -8 -6 -4 -2 0 2 4 6 8 10 12 14] .* pi/180;
+p_drag = [0.07518 0.03734 0.02206 0.01286 0.00729 0.00508 0.00509 0.00520 0.00509 0.00507 0.00729 0.01285 0.02206 0.03735 0.07532]; % fit data from airfoiltools for NACA 0012
 
 
-for i = 1:length(alpha)
-    alpha_1 = alpha(i);
-    geo_r = alpha(i) + (2 * pi / 180); % geometric AoA (geometric twist + alpha) at tips [radians]
-    geo_t = alpha(i); % geometric AoA (geometric twist + alpha) at root [radians]
-    Cl_ref.tip(i) = Vortex_Panel(x_b_tip, y_b_tip, alpha(i));
-    Cl_ref.root(i) = Vortex_Panel(x_b_root, y_b_root, alpha(i));
+for i = 1:length(alpha_exp)
+    alpha_1 = alpha_exp(i);
+    geo_r = alpha_1 + (2 * pi / 180); % geometric AoA (geometric twist + alpha) at tips [radians]
+    geo_t = alpha_1; % geometric AoA (geometric twist + alpha) at root [radians]
+    Cl_ref.tip(i) = Vortex_Panel(x_b_tip, y_b_tip, alpha_1);
+    Cl_ref.root(i) = Vortex_Panel(x_b_root, y_b_root, alpha_1);
     [liftingLine.e(i), liftingLine.CL(i), liftingLine.CD_i(i), liftingLine.CD_prof(i), ~] = PLLT_Pro(b, a0_t, a0_r, c_t, c_r, aero_t, aero_r, geo_t, geo_r, N, p_drag);    
     %liftFit = polyfit(alpha_exp, p_drag, 2);
     %liftingLine.CD_prof(i) = polyval(liftFit, alpha(i));
@@ -67,7 +68,7 @@ figure(); % Task 1 Plot
 hold on;
 grid on;
 box on;
-plot(alpha * 180/pi, liftingLine.CL, 'LineWidth', 1.5);
+plot(alpha * 180/pi, liftingLine.CL(3:end), 'LineWidth', 1.5);
 xlabel('Angle of Attack (deg)');
 ylabel('Lift Coefficient (C_L)');
 title('Lift Coefficient vs Angle of Attack');
@@ -77,8 +78,8 @@ figure; % task 2
 hold on;
 grid on;
 box on;
-plot(alpha * 180/pi, liftingLine.CD_prof, 'LineWidth', 1.5);
-plot(alpha_exp * 180/pi, p_drag, 'LineWidth', 1.2)
+plot(alpha_exp * 180/pi, liftingLine.CD_prof, 'LineWidth', 2);
+plot(alpha_exp * 180/pi, p_drag, 'LineWidth', 1.5)
 xlabel('Angle of Attack (deg)');
 ylabel('Drag Coefficient (C_D)');
 title('Drag Coefficient vs Angle of Attack');
@@ -88,9 +89,9 @@ figure; % task 3 plot
 hold on;
 grid on;
 box on;
-plot(alpha * 180/pi, liftingLine.CD_tot, 'k', 'LineWidth', 2);
-plot(alpha * 180/pi, liftingLine.CD_i, 'b--', 'LineWidth', 1.5);
-plot(alpha * 180/pi, liftingLine.CD_prof, 'r-.', 'LineWidth', 1.5);
+plot(alpha * 180/pi, liftingLine.CD_tot(3:end), 'k', 'LineWidth', 2);
+plot(alpha * 180/pi, liftingLine.CD_i(3:end), 'b--', 'LineWidth', 1.5);
+plot(alpha * 180/pi, liftingLine.CD_prof(3:end), 'r-.', 'LineWidth', 1.5);
 xlabel('Angle of Attack (deg)');
 ylabel('Drag Coefficient');
 legend('Total Drag (C_D)', 'Induced Drag (C_{Di})', 'Profile Drag (C_{D0})', 'Location', 'best');
@@ -118,7 +119,7 @@ plot(V, T_req, 'b-', 'LineWidth', 2);
 xlabel('Airspeed (knots)');
 ylabel('Thrust Required (lbs)');
 title('Thrust Required for Steady Level Flight (10,000 ft)');
-legend('Cessna 180 (NACA 2412 Root, NACA 0012 Tip)', 'Location', 'best')
+legend('Cessna 180 (NACA 2412 Root, NACA 0012 Tip)', 'Location', 'northwest')
 grid on;
 
 filenamesVec = ["task1liftpolar", "task2dragvsangle", "task3dragpolar", "task4velvsthrust"];
@@ -234,9 +235,10 @@ function [e, c_L, c_Di, C_D0, A_matrix] = PLLT_Pro(b, a0_t, a0_r, c_t, c_r, aero
 
     alpha_eff = alpha_geo - alpha_i_vec;
     
-    alpha_exp = [-4 -2 0 2 4 6 8] .* pi/180;
-    p_drag = [0.00232 0.00144 0.00114 0.00144 0.00232 0.00395 0.00612];
+    alpha_exp = [-14 -12 -10 -8 -6 -4 -2 0 2 4 6 8 10 12 14] .* pi/180;
+    p_drag = [0.07518 0.03734 0.02206 0.01286 0.00729 0.00508 0.00509 0.00520 0.00509 0.00507 0.00729 0.01285 0.02206 0.03735 0.07532];
     fitDrag = polyfit(alpha_exp, p_drag, 2);
+    cd_local = polyval(fitDrag, alpha_eff);
 
     y_stations = (b/2) * cos(theta);
     integrand = cd_local .* c;
