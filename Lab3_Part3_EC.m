@@ -2,14 +2,15 @@ clc;
 clear;
 close all;
 
+saveFigs = 1; % set to 1 if you want to run the saving figures
 
-tipCode = 0012;
-panelCount = 64;
+tipCode = 0012; % generating NACA for 0012
+panelCount = 64; % determined in prev part
 tipVec = digi(tipCode);
 [x_b_tip, y_b_tip] = genNACA(1, tipVec(1), tipVec(2), str2double(strcat(num2str(tipVec(3)), num2str(tipVec(4)))), (panelCount/2) + 2, 0);
 
-rootCode = 2412;
-panelCount_2 = 68;
+rootCode = 2412; % generating NACA for 2412
+panelCount_2 = 68; % determined in prev part
 rootVec = digi(rootCode);
 [x_b_root, y_b_root] = genNACA(1, rootVec(1), rootVec(2), str2double(strcat(num2str(rootVec(3)), num2str(rootVec(4)))), (panelCount_2/2) + 2, 0);
 
@@ -18,7 +19,7 @@ alpha_2D_rad = alpha_2D_deg .* (pi/180);
 Cl_tip_2D = zeros(1, length(alpha_2D_deg));
 Cl_root_2D = zeros(1, length(alpha_2D_deg));
 
-for i = 1:length(alpha_2D_deg)
+for i = 1:length(alpha_2D_deg) % find 2D Cl using vortex panel code
     Cl_tip_2D(i)  = Vortex_Panel(x_b_tip, y_b_tip, alpha_2D_deg(i));
     Cl_root_2D(i) = Vortex_Panel(x_b_root, y_b_root, alpha_2D_deg(i));
 end
@@ -48,7 +49,7 @@ A_mat = zeros(length(alpha_exp), N);
 liftingLine = struct();
 Cl_ref = struct();
 
-for i = 1:length(alpha_exp)
+for i = 1:length(alpha_exp) % iterate for each angle of attack
     alpha_1 = alpha_exp(i);
     geo_r = alpha_1 + (2 * pi / 180); % geometric AoA (geometric twist + alpha) at tips [radians]
     geo_t = alpha_1; % geometric AoA (geometric twist + alpha) at root [radians]
@@ -57,21 +58,21 @@ for i = 1:length(alpha_exp)
     [liftingLine.e(i), liftingLine.CL(i), liftingLine.CD_i(i), liftingLine.CD_prof(i), ~] = PLLT(b, a0_t, a0_r, c_t, c_r, aero_t, aero_r, geo_t, geo_r, N, p_drag);    
     liftingLine.CD_tot(i) = liftingLine.CD_prof(i) + liftingLine.CD_i(i);
 end
-S = (c_r + c_t)/2 * b;
+S = (c_r + c_t)/2 * b; % planform area
 
 
-figure(); % Task 1 Plot
+figure(); % Task 1 Plot - Cl vs angle of attack
 hold on;
 grid on;
 box on;
-plot(alpha_exp * 180/pi, liftingLine.CL, 'LineWidth', 1.5);
+plot(alpha_exp * 180/pi, liftingLine.CL, 'LineWidth', 1.5); 
 xlabel('Angle of Attack (deg)');
 ylabel('Lift Coefficient (C_L)');
 xlim([-10, 15])
 title('Lift Coefficient vs Angle of Attack');
 legend('Cessna 180 (NACA 2412 Root, NACA 0012 Tip)', 'Location', 'best')
 
-figure; % task 2
+figure; % task 2 plot - Cd model and Cd experimental vs angle of attack
 hold on;
 grid on;
 box on;
@@ -83,7 +84,7 @@ ylabel('Drag Coefficient (C_D)');
 title('Drag Coefficient vs Angle of Attack');
 legend('Calc Profile Drag', 'Experimental Data', 'Location', 'best')
 
-figure; % task 3 plot
+figure; % task 3 plot - drag components modelled vs angle of attack 
 hold on;
 grid on;
 box on;
@@ -99,13 +100,13 @@ title('Drag Components vs Angle of Attack');
 rho = 0.001756; % density [slugs/ft^3] at 10,000' standard day
 W = 2500; % aircraft weight [lbs]
 
-V = zeros(1, length(alpha_exp));
+V = zeros(1, length(alpha_exp)); 
 T_req = zeros(1, length(alpha_exp));
 
-for i = 1:length(alpha_exp)
+for i = 1:length(alpha_exp) % iterate to solve for thrust required in SL flight
     if liftingLine.CL(i) > 0
         V_1 = sqrt((2*W)/(rho * S * liftingLine.CL(i)));
-        V(i) = 0.592484 * V_1;
+        V(i) = 0.592484 * V_1; % scale from feet per sec to knots
         T_req(i) = 0.5 * rho * V_1^2 * S * liftingLine.CD_tot(i);
     else
         V(i) = NaN;
@@ -113,7 +114,7 @@ for i = 1:length(alpha_exp)
     end
 end
 
-figure(); % task 4 plot
+figure(); % task 4 plot - thrust req vs airspeed
 plot(V, T_req, 'b-', 'LineWidth', 2);
 xlabel('Airspeed (knots)');
 ylabel('Thrust Required (lbs)');
@@ -121,7 +122,18 @@ title('Thrust Required for Steady Level Flight (10,000 ft)');
 legend('Cessna 180 (NACA 2412 Root, NACA 0012 Tip)', 'Location', 'northwest')
 grid on;
 
-filenamesVec = ["task1liftpolar", "task2dragvsangle", "task3dragpolar", "task4velvsthrust"];
+filenamesVec = ["p3task1liftpolar", "p3task2dragvsangle", "p3task3dragpolar", "p3task4velvsthrust"];
+
+if (saveFigs == 1)
+
+for i = 1:4
+    figure(i); % Activate the specific figure
+    ax = gca;  % Get current axes
+    set(ax, 'LooseInset', get(ax, 'TightInset')); % Tighten margins
+    print(filenamesVec(i), '-r500', '-dpng');     % Save
+end
+
+end
 
 % Part 1 NACA Code Generator
 
@@ -239,8 +251,7 @@ function [e, c_L, c_Di, C_D0, A_matrix] = PLLT(b, a0_t, a0_r, c_t, c_r, aero_t, 
 
     y_stations = (b/2) * cos(theta);
     integrand = cd_local .* c;
-    trapz_int = abs(trapz(y_stations, integrand)); 
-    
+    trapz_int = abs(trapz(y_stations, integrand));
     C_D0 = (2/S) * trapz_int;
 end
 
